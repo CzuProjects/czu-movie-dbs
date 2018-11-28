@@ -1,0 +1,267 @@
+--liquibase formatted sql
+
+--changeset moshchev:20180428190000 dbms:oracle runOnChange:true stripComments:false splitStatements:false endDelimiter: /
+--comment: proc_servers_with_backup
+
+create or replace procedure proc_servers_with_backup
+is
+  BEGIN
+    DECLARE
+      TYPE METRIC_CLAUSE IS TABLE OF VARCHAR2(500 CHAR) INDEX BY VARCHAR2 (200 CHAR );
+      v_storedate      date;
+      metric_array      METRIC_CLAUSE;
+      query_body CLOB;
+      l_idx            VARCHAR2(200 CHAR);
+      data_discr_query CLOB;
+      overall_success_rate_query CLOB;
+
+    BEGIN
+      -- Get latest date of dataload -------------
+      SELECT max(REPORT_DATE_EST) report_date
+      INTO v_storedate
+      FROM DHC_BCK_REPORTING_BY_ENV;
+     -- metric array contains labels and where clauses -------------
+      metric_array('totalincmdb') := '';
+      metric_array('backedup') := 'where lower(has_backup_in_last_24hrs)=''yes''';
+      metric_array('withoutbackup') := 'where lower(has_backup_in_last_24hrs)=''no'' and lower(has_backup_information)=''yes''';
+      -- REQUIRED metric -------------
+      metric_array('requiredcmdb') := 'where lower(require_backup)=''yes''';
+      metric_array('required_scheduled_cmdb') := 'where lower(require_backup)=''yes'' and lower(has_backup_information)=''yes''';
+      metric_array('required_not_scheduled_cmdb') := 'where lower(require_backup)=''yes''  and lower(has_backup_information)=''no'' and (lower(BACKUP_METHOD)!=''snapshot'' and lower(backup_method)!=''netapp snapshot'' and lower(backup_method)!=''as400 brms'')';
+      metric_array('required_netapp') := 'where lower(require_backup)=''yes'' and (lower(BACKUP_METHOD)=''snapshot'' or lower(backup_method)=''netapp snapshot'') and lower(has_backup_information)=''no''';
+      -- NOT REQUIRED metric -------------
+      metric_array('not_required') := 'where lower(require_backup)=''no''';
+      metric_array('not_required_scheduled') := 'where lower(require_backup)=''no'' and lower(has_backup_information)=''yes''';
+      metric_array('not_required_not_scheduled') := 'where lower(require_backup)=''no'' and lower(has_backup_information)=''no''';
+      -- ONBOARDED metric -------------
+      metric_array('requiredunknown') := 'where lower(require_backup)=''unknown''';
+      metric_array('required_unknown_scheduled') := 'where lower(require_backup)=''unknown'' and lower(has_backup_information)=''yes''';
+      metric_array('required_unknown_not_scheduled') := 'where lower(require_backup)=''unknown''  and lower(has_backup_information)=''no''';
+      -- GIO metric -------------
+      metric_array('giomanaged') := 'where lower(SERVER_HCL_RU_COUNT)=''yes''';
+      metric_array('gionotmanaged') := 'where lower(SERVER_HCL_RU_COUNT)=''no''';
+      metric_array('gionotspecified') := 'where lower(SERVER_HCL_RU_COUNT)=''unknown''';
+      -- Miscelaneous metrics -------------
+      -- Not in CMDB metric is implemented only as a metric on frontend - simple count query
+      -- Data discrepancies metric is implemented separately
+      metric_array('as400') := 'where lower(backup_method)=''as400 brms'' and lower(require_backup)!=''no''';
+      metric_array('netappsnapshots') := 'where (lower(BACKUP_METHOD)=''snapshot'' or lower(backup_method)=''netapp snapshot'')';
+      -- Latest Jobs -------------
+      metric_array('success_jobs') := 'where lower(LAST_JOB_STATUS) =''success''
+                                         and start_time_est >= trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss''))
+                                         and start_time_est < (trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'')) + 1) ';
+      metric_array('inprogressjobs') := 'where (lower(LAST_JOB_STATUS) =''in progress'' or lower(LAST_JOB_STATUS) =''waiting'') and lower(HAS_BACKUP_INFORMATION) =''yes''
+                                           and start_time_est >= trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss''))
+                                           and start_time_est < (trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'')) + 1) ';
+      metric_array('failedjobs') := 'where lower(LAST_JOB_STATUS) =''fail'' and lower(HAS_BACKUP_INFORMATION) =''yes''
+                                       and start_time_est >= trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss''))
+                                       and start_time_est < (trunc(TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'')) + 1) ';
+      metric_array('islongrunning') := 'where lower(IS_LONG_RUNNING) =''yes'' and lower(HAS_BACKUP_INFORMATION) =''yes''';
+      metric_array('chronicfail') := 'where lower(HAS_BACKUP_IN_LAST_3_DAYS) =''no'' and lower(HAS_BACKUP_INFORMATION) =''yes'' AND  lower(backup_method)!=''as400 brms'' AND  lower(backup_method)!=''netapp snapshot''';
+      metric_array('ischroniclongrunning') := 'where lower(IS_CHRONIC_LONG_RUNNING) =''yes'' and lower(HAS_BACKUP_INFORMATION) =''yes'' AND  lower(backup_method)!=''as400 brms'' AND  lower(backup_method)!=''netapp snapshot''';
+      metric_array('potentialchronicfail') := 'where lower(HAS_BACKUP_IN_LAST_2_DAYS) =''no'' and lower(HAS_BACKUP_INFORMATION) =''yes'' AND  lower(backup_method)!=''as400 brms'' AND  lower(backup_method)!=''netapp snapshot''';
+      -- Loop on array of metrics and add them to the template, insert data into table -------------
+      l_idx := metric_array.first;
+      WHILE (l_idx IS NOT NULL) LOOP
+
+        query_body :=   'insert into SERVER_WITH_BACKUPS_BY_ENV( labelid, numericvalue, report_date,  environment, business_class,gxp)' ||
+                        '(select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, utils.env(server_system_role) as environment, business_criticality,lower(gxp_ind) from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by business_criticality,gxp_ind, server_system_role
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, ''all'' as environment, business_criticality,lower(gxp_ind) from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by business_criticality,gxp_ind
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date,utils.env(server_system_role) as environment, ''all'' as business_criticality,lower(gxp_ind) from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by gxp_ind,server_system_role
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, utils.env(server_system_role) as environment, business_criticality,''all'' as gxp_ind from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by business_criticality,server_system_role
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, ''all'' as environment, ''all'' as business_criticality,lower(gxp_ind) from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by gxp_ind
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, ''all'' as environment, business_criticality,''all'' as gxp_ind from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by business_criticality
+                      union
+                        select ''' || l_idx || ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date,  utils.env(server_system_role) as environment, ''all''  as business_criticality,''all'' as gxp_ind from mview_srv_app_unified_backups
+                                ' || metric_array(l_idx) ||
+                        ' group by server_system_role
+                      union
+                        select ''' || l_idx ||
+                        ''' as label,count(distinct server_name) as totalcount,TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') as report_date, ''all'' as environment, ''all'' business_criticality,''all'' as gxp_ind from mview_srv_app_unified_backups ' || metric_array(l_idx) ||')';
+
+        BEGIN
+
+          dbms_output.put_line('Executing query for metric:' ||l_idx);
+          --dbms_output.put_line(query_body);
+
+          EXECUTE IMMEDIATE query_body;
+          EXCEPTION
+          WHEN OTHERS THEN dbms_output.put_line('Executing query for metric '||l_idx||' failed!! Query:    ' || query_body );
+          raise;
+        END;
+
+        l_idx := metric_array.next(l_idx);
+      END LOOP;
+
+      --Overall Success Rate metric
+      overall_success_rate_query := 'insert into server_with_backups_by_env(labelid, numericvalue, report_date,  environment, business_class, gxp )
+(
+  select ''succ_rate'' as labelid, round(((a.numericvalue / (b.numericvalue + a.numericvalue))*100),2) as numericvalue, a.report_date, a.environment, a.business_class, a.gxp
+  from server_with_backups_by_env a, server_with_backups_by_env b
+    where
+      a.environment = b.environment
+      and a.report_date = to_date('''||to_char(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'')
+      and a.report_date = b.report_date
+      and a.business_class = b.business_class
+      and a.gxp = b.gxp
+      and (b.numericvalue + a.numericvalue) > 0
+      and a.labelid = ''backedup''
+      and b.labelid = ''withoutbackup''
+)';
+      begin
+        execute immediate overall_success_rate_query;
+        exception
+        when others then dbms_output.put_line('Executing query for metric ''succ_rate'' failed!! Query:    ' || overall_success_rate_query );
+        raise;
+
+      end;
+      -- DATA DISCREPANCIES is a separate metric that is not applicable for the queries above - different way of computing
+      data_discr_query :=
+      'insert into SERVER_WITH_BACKUPS_BY_ENV ( labelid,numericvalue,report_date,  environment,  business_class, gxp)
+        (SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           environment,
+           business_criticality,
+           lower(gxp)
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY business_criticality, gxp, environment
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           ''all''                                                  AS environment,
+           business_criticality,
+           lower(gxp)
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY business_criticality, gxp
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           environment,
+           ''all''                                                  AS business_criticality,
+           lower(gxp)
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY gxp, environment
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           environment,
+           business_criticality,
+           ''all''                                                  AS gxp
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY business_criticality, environment
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           ''all''                                                  AS environment,
+           ''all''                                                  AS business_criticality,
+           lower(gxp)
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY gxp
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           ''all''                                                  AS environment,
+           business_criticality,
+           ''all''                                                  AS gxp
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY business_criticality
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           environment,
+           ''all''                                                  AS business_criticality,
+           ''all''                                                  AS gxp
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+
+         GROUP BY environment
+         UNION
+         SELECT
+           ''data_discrepancies''                                  AS label,
+           count(*)                             AS totalcount,
+           TO_DATE('''||TO_CHAR(v_storedate,'YYYY-MM-DD hh24:mi:ss')||''',''YYYY-MM-DD hh24:mi:ss'') AS report_date,
+           ''all''                                                  AS environment,
+           ''all''                                                     business_criticality,
+           ''all''                                                  AS gxp
+         FROM (
+           select environment , gxp,business_criticality, count(server_name)
+           from view_server_backups report
+           group by environment, gxp, business_criticality, server_name having count(server_name) > 1
+         )
+        )';
+      --dbms_output.put_line(data_discr_query);
+      dbms_output.put_line('Executing query for metric: data_discrepancies');
+      EXECUTE IMMEDIATE data_discr_query;
+
+      delete from SERVER_WITH_BACKUPS_BY_ENV where report_date is null;
+
+      EXCEPTION
+      WHEN OTHERS THEN RAISE;
+    END;
+  END;
+
+--rollback drop procedure proc_servers_with_backup

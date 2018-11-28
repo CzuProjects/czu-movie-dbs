@@ -1,0 +1,15 @@
+.Movie{
+    width: 250px;
+    border: 1px solid #cccccc;
+    box-shadow: 0 2px 3px #cccccc;
+    margin: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: pointer;
+    padding: 16px;
+}
+
+.Movie:hover,
+.Movie:active {
+    background-color: #c0ddf5;
+}
