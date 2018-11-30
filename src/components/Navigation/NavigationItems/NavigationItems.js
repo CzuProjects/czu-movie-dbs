@@ -2,12 +2,15 @@ import React from 'react';
 import classes from './NavigationItems.css';
 import NavigationItem from './NavigationItem/NavigationItem';
 
-const navigationItems = () => (
-    <ul className={classes.NavigationItems}>
-        <NavigationItem link='/' active>Novinky</NavigationItem>
-        <NavigationItem link='/'>Televize</NavigationItem>
-        <NavigationItem link='/'>DVD & BlueRay</NavigationItem>
-    </ul>
-);
+const navigationItems = (props) => {
+
+    return (
+        <ul className={classes.NavigationItems}>
+            <NavigationItem link='/now_playing' >Now playing</NavigationItem>
+            <NavigationItem unsuported={props.unsuported} link='/popular' >Popular</NavigationItem>
+            <NavigationItem unsuported={props.unsuported} link='/top_rated' >Top rated</NavigationItem>
+        </ul>
+    )
+};
 
 export default navigationItems;

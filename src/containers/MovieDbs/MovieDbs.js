@@ -1,35 +1,20 @@
 import React, { Component } from 'react';
-import Movie from '../../components/Movie/Movie';
-import axios from 'axios';
+import { Route } from 'react-router-dom';
+
+import Movies from './Movies/Movies';
+import MovieDetail from '../../components/Movie/MovieDetail/MovieDetail';
 
 class MovieDbs extends Component{
 
-    componentDidMount(){
-        axios.get('https://api.themoviedb.org/3/movie/now_playing?api_key=53b73b543391b386b5953d41b80129f0&language=en-US&page=1&region=us')
-            .then(response => {
-                this.setState({
-                    movies: response.data.results
-                });
-                console.log(this.state.movies);
-            });
-    }
-
-    state = {
-        movies: [
-            {id: 1, title: 'Harry Potter a kamen mudrcu', overview: 'Popis k Harrymu'},
-            {id: 2, title: 'Vykoupeni z veznice shawshank', overview: 'Popis k vykoupeni'}
-        ]
-    };
-
     render(){
-
-        const movies = this.state.movies.map(movie => {
-            return <Movie key={movie.id} title={movie.title} overview={movie.overview}/>
-        });
 
         return (
             <div>
-                {movies}
+                <Route path="/" exact component={Movies}/>
+                <Route path="/now_playing" component={Movies}/>
+                <Route path="/popular" render={() => <h1>Popular</h1>}/>
+                <Route path="/top_rated" render={() => <h1>Top rated</h1>}/>
+                <Route path="/movie-detail/:id" component={MovieDetail}/>
             </div>
         );
     }
