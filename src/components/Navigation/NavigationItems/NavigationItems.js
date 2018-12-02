@@ -9,6 +9,7 @@ const navigationItems = (props) => {
             <NavigationItem link='/now_playing' >Now playing</NavigationItem>
             <NavigationItem unsuported={props.unsuported} link='/popular' >Popular</NavigationItem>
             <NavigationItem unsuported={props.unsuported} link='/top_rated' >Top rated</NavigationItem>
+            <NavigationItem link='/add_movie' >Add movie</NavigationItem>
         </ul>
     )
 };

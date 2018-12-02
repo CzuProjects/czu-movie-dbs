@@ -5,20 +5,47 @@ import classes from './MovieDetail.css';
 class MovieDetail extends Component {
 
     state = {
-        detail: null
+        detail: null,
+        mocked_data: [
+            {
+                id: 1,
+                original_title: 'Harry Potter',
+                overview: 'Obecny text o Harrym',
+                popularity: 99,
+                backdrop_path: '/wfnMt6LGqYHcNyOfsuusw5lX3bL.jpg'
+            },
+            {
+                id: 2,
+                original_title: 'Vykoupeni z veznice Shawshank',
+                overview: 'Obecny text o Shawshank',
+                popularity: 99,
+                backdrop_path: '/j9XKiZrVeViAixVRzCta7h1VU9W.jpg'
+            }
+        ],
+        api_key: null
     };
 
     componentDidMount(){
-        if (this.props.match.params.id){
+        if (this.props.match.params.id && this.state.api_key){
             if ( !this.state.detail || (this.state.detail && this.props.match.params.id !== this.state.detail.id)){
-                axios.get('https://api.themoviedb.org/3/movie/'+this.props.match.params.id+'?api_key=53b73b543391b386b5953d41b80129f0&language=en-US')
+                axios.get('https://api.themoviedb.org/3/movie/'+this.props.match.params.id+'?api_key='+this.state.api_key+'&language=en-US')
                     .then(response => {
                         this.setState({
                             detail: response.data
                         });
-                        console.log(response.data);
                     });
             }
+        }else{
+            const mocked_details = [...this.state.mocked_data];
+            let mocked_detail = null;
+            for (let detail in mocked_details){
+                if (mocked_details[detail].id === parseInt(this.props.match.params.id)){
+                    mocked_detail = mocked_details[detail];
+                }
+            }
+            this.setState({
+                detail: mocked_detail
+            });
         }
     }
 

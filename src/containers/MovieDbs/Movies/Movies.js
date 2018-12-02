@@ -7,18 +7,21 @@ class Movies extends Component {
 
     state = {
         movies: [
-            {id: 1, title: 'Harry Potter a kamen mudrcu', overview: 'Popis k Harrymu'},
-            {id: 2, title: 'Vykoupeni z veznice shawshank', overview: 'Popis k vykoupeni'}
-        ]
+            {id: 1, title: 'Harry Potter a Kamen Mudrcu', overview: 'Popis k Harrymu'},
+            {id: 2, title: 'Vykoupeni z veznice Shawshank', overview: 'Popis k vykoupeni'}
+        ],
+        api_key: null
     };
 
     componentDidMount(){
-        axios.get('https://api.themoviedb.org/3/movie/now_playing?api_key=53b73b543391b386b5953d41b80129f0&language=en-US&page=1&region=us')
-            .then(response => {
-                this.setState({
-                    movies: response.data.results
+        if (this.state.api_key) {
+            axios.get('https://api.themoviedb.org/3/movie/now_playing?api_key='+this.state.api_key+'&language=en-US&page=1&region=us')
+                .then(response => {
+                    this.setState({
+                        movies: response.data.results
+                    });
                 });
-            });
+        }
     }
 
 
