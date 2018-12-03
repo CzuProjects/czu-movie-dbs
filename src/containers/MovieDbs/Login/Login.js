@@ -20,14 +20,21 @@ class Login extends Component {
 
     handleSubmit = (event) => {
         event.preventDefault();
-        console.log(this.state);
 
         if (!this.state.username) {
+            console.log("handleSubmit, username incorrect");
             return this.setState({ error: 'Username is required' });
         }
 
         if (!this.state.password) {
+            console.log("handleSubmit, password incorrect");
             return this.setState({ error: 'Password is required' });
+        }
+
+        if (this.state.username === 'test' && this.state.password === 'test') {
+            this.login();
+        }else {
+            return this.setState({ error: 'Incorrect username or password!' });
         }
 
         return this.setState({ error: '' });
@@ -40,7 +47,7 @@ class Login extends Component {
     render() {
 
         const { redirectToReferrer } = this.state;
-        if (redirectToReferrer === true){
+        if (redirectToReferrer){
             return <Redirect to="/"/>
         }
 
@@ -54,9 +61,9 @@ class Login extends Component {
                             {this.state.error}
                         </h3>
                     }
-                    <input type="text" placeholder="Username" data-test="username" value={this.state.username} onChange={event => this.setState({username: event.target.value})} />
-                    <input type="password" placeholder="password" data-test="password" value={this.state.password} onChange={event => this.setState({password: event.target.value})} />
-                    <input type="submit" value="Log In" data-test="submit" onClick={this.login}/>
+                    <input type="text" placeholder="Username" value={this.state.username} onChange={event => this.setState({username: event.target.value})} />
+                    <input type="password" placeholder="password" value={this.state.password} onChange={event => this.setState({password: event.target.value})} />
+                    <input type="submit" value="Log In" />
                 </form>
             </div>
         );

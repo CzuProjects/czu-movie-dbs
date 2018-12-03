@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import classes from './MovieDetail.css';
+import { API } from '../../../containers/MovieDbs/MovieDbs';
 
 class MovieDetail extends Component {
 
@@ -21,14 +22,13 @@ class MovieDetail extends Component {
                 popularity: 99,
                 backdrop_path: '/j9XKiZrVeViAixVRzCta7h1VU9W.jpg'
             }
-        ],
-        api_key: null
+        ]
     };
 
     componentDidMount(){
-        if (this.props.match.params.id && this.state.api_key){
+        if (this.props.match.params.id && API.key){
             if ( !this.state.detail || (this.state.detail && this.props.match.params.id !== this.state.detail.id)){
-                axios.get('https://api.themoviedb.org/3/movie/'+this.props.match.params.id+'?api_key='+this.state.api_key+'&language=en-US')
+                axios.get('https://api.themoviedb.org/3/movie/'+this.props.match.params.id+'?api_key='+API.key+'&language=en-US')
                     .then(response => {
                         this.setState({
                             detail: response.data

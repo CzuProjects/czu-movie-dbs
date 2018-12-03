@@ -6,6 +6,10 @@ import MovieDetail from '../../components/Movie/MovieDetail/MovieDetail';
 import NewMovie from '../../components/Movie/NewMovie/NewMovie';
 import Login from './Login/Login';
 
+export const API = {
+    key: ''
+};
+
 export const fakeAuth = {
     isAuthenticated: false,
     authenticate(callback) {
@@ -24,6 +28,11 @@ const PrivateRoute = ({component: Component, ...rest}) => (
     )}/>
 );
 
+const logout = () => {
+    fakeAuth.logout(() => {});
+    API.key = '';
+};
+
 class MovieDbs extends Component{
 
     render(){
@@ -37,6 +46,10 @@ class MovieDbs extends Component{
                 <PrivateRoute path="/add_movie" component={NewMovie}/>
                 <Route path="/movie-detail/:id" component={MovieDetail}/>
                 <Route path="/login" component={Login}/>
+                <Route path="/logout" render={() => {
+                    logout();
+                    return <Redirect to="/"/>
+                }}/>
             </div>
         );
     }

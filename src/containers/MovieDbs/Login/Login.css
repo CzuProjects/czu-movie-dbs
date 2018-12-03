@@ -8,10 +8,8 @@
 }
 
 input[type="password"], input[type="text"] {
-    /*background: url('http://i.minus.com/ibhqW9Buanohx2.png') center left no-repeat, linear-gradient(top, #d6d7d7, #dee0e0);*/
     border: 1px solid #a1a3a3;
     border-radius: 4px;
-    /*box-shadow: 0 1px #fff;*/
     box-sizing: border-box;
     color: #696969;
     height: 39px;
@@ -28,7 +26,6 @@ input[type="submit"] {
     font-family:Arial, "Helvetica", sans-serif;
     font-size:16px;
     font-weight:bold;
-    /*color:#fff;*/
     text-decoration:none;
     text-transform:uppercase;
     text-align:center;
@@ -38,5 +35,4 @@ input[type="submit"] {
     position:relative;
     cursor:pointer;
     border: none;
-    /*box-shadow: inset 0px 1px 0px #2ab7ec, 0px 5px 0px 0px #497a78, 0px 10px 5px #999;*/
 }
