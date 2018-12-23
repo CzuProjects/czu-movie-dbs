@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import classes from './Login.css';
 import { fakeAuth } from '../MovieDbs';
 import { Redirect } from 'react-router-dom';
+import { API } from '../../../containers/MovieDbs/MovieDbs';
+import axios from '../../../axios';
 
 class Login extends Component {
 
@@ -9,14 +11,25 @@ class Login extends Component {
         username: '',
         password:'',
         error: '',
-        redirectToReferrer: false
+        redirectToReferrer: false,
+        api_key: null
     };
 
     login = () => {
         fakeAuth.authenticate(() => {
             this.setState({redirectToReferrer: true})
+            //API.key = this.state.api_key;
         });
     };
+
+    componentDidMount(){
+        axios.get('/api_key.json').then(response => {
+            this.setState({
+                api_key: response.data
+            });
+            console.log(response.data);
+        });
+    }
 
     handleSubmit = (event) => {
         event.preventDefault();
