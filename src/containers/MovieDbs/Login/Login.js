@@ -23,11 +23,13 @@ class Login extends Component {
     };
 
     componentDidMount(){
-        axios.get('/api_key.json').then(response => {
-            this.setState({
-                api_key: response.data
+        if (!this.state.api_key){
+            axios.get('/api_key.json').then(response => {
+                this.setState({
+                    api_key: response.data
+                });
             });
-        });
+        }
     }
 
     handleSubmit = (event) => {
