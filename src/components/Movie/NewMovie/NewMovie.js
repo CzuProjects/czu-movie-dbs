@@ -25,11 +25,6 @@ class NewMovie extends Component {
             });
     };
 
-    updateApiKeyHandler = (event) => {
-        this.setState({api_key: event.target.value});
-        API.key = event.target.value;
-    };
-
     render() {
 
         return (
@@ -53,7 +48,7 @@ class NewMovie extends Component {
                     </div>
                 </div>
                 <div>
-                    <input type="text" value={this.state.api_key} placeholder="enter API key if you want load data" onChange={this.updateApiKeyHandler}/>
+                    <label>API key is set to: {this.state.api_key}</label>
                 </div>
             </div>
         );

@@ -18,7 +18,7 @@ class Login extends Component {
     login = () => {
         fakeAuth.authenticate(() => {
             this.setState({redirectToReferrer: true})
-            //API.key = this.state.api_key;
+            API.key = this.state.api_key;
         });
     };
 
@@ -27,7 +27,6 @@ class Login extends Component {
             this.setState({
                 api_key: response.data
             });
-            console.log(response.data);
         });
     }
 
