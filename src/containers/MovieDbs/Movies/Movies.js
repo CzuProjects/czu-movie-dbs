@@ -20,7 +20,9 @@ class Movies extends Component {
                     this.setState({
                         movies: response.data.results
                     });
-                });
+                }).catch(error => {
+                    console.log(error);
+            });
         }
     }
 
