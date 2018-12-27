@@ -1,33 +1,23 @@
-import React, { Component } from 'react';
+import React from 'react';
 import classes from './Toolbar.css';
 import Logo from '../../Logo/Logo';
 import NavigationItems from '../NavigationItems/NavigationItems';
+import DrawerToggle from '../SideDrawer/DrawerToggle/DrawerToggle';
 import { Link } from 'react-router-dom';
 
 
+const toolbar = (props) => (
+    <header className={classes.Toolbar}>
+        <DrawerToggle clicked={props.openHandler}/>
+        <div className={classes.Logo}>
+            <Link to="/" >
+                <Logo/>
+            </Link>
+        </div>
+        <nav className={classes.DesktopOnly}>
+            <NavigationItems unsuported={() => alert('This feature is not supported yet!')}/>
+        </nav>
+    </header>
+);
 
-class Toolbar extends Component {
-
-    notSupportedFeature = () => {
-        alert('This feature is not supported!');
-    };
-
-
-    render(){
-
-        return(
-            <header className={classes.Toolbar}>
-                <div className={classes.Logo}>
-                    <Link to="/" >
-                        <Logo/>
-                    </Link>
-                </div>
-                <nav className={classes.DesktopOnly}>
-                    <NavigationItems unsuported={this.notSupportedFeature}/>
-                </nav>
-            </header>
-        );
-    }
-}
-
-export default Toolbar;
+export default toolbar;
