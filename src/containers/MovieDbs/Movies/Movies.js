@@ -1,6 +1,6 @@
 import React, { Component }from 'react';
-import axios from "axios";
-import Movie from "../../../components/Movie/Movie";
+import axios from 'axios';
+import Movie from '../../../components/Movie/Movie';
 import classes from './Movies.css';
 import { API } from '../MovieDbs';
 
