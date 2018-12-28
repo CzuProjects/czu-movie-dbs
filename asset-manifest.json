@@ -1,13 +1,14 @@
 {
-  "main.css": "/czu-movie-dbs/static/css/main.d545898c.chunk.css",
-  "main.js": "/czu-movie-dbs/static/js/main.9a704a56.chunk.js",
-  "main.js.map": "/czu-movie-dbs/static/js/main.9a704a56.chunk.js.map",
-  "static/js/1.2235908e.chunk.js": "/czu-movie-dbs/static/js/1.2235908e.chunk.js",
-  "static/js/1.2235908e.chunk.js.map": "/czu-movie-dbs/static/js/1.2235908e.chunk.js.map",
+  "main.css": "/czu-movie-dbs/static/css/main.33e3bc98.chunk.css",
+  "main.js": "/czu-movie-dbs/static/js/main.1147eb57.chunk.js",
+  "main.js.map": "/czu-movie-dbs/static/js/main.1147eb57.chunk.js.map",
+  "static/js/1.b00230e6.chunk.js": "/czu-movie-dbs/static/js/1.b00230e6.chunk.js",
+  "static/js/1.b00230e6.chunk.js.map": "/czu-movie-dbs/static/js/1.b00230e6.chunk.js.map",
   "runtime~main.js": "/czu-movie-dbs/static/js/runtime~main.463396a7.js",
   "runtime~main.js.map": "/czu-movie-dbs/static/js/runtime~main.463396a7.js.map",
-  "static/css/main.d545898c.chunk.css.map": "/czu-movie-dbs/static/css/main.d545898c.chunk.css.map",
+  "static/media/czu-movie-dbs.png": "/czu-movie-dbs/static/media/czu-movie-dbs.571de794.png",
+  "static/css/main.33e3bc98.chunk.css.map": "/czu-movie-dbs/static/css/main.33e3bc98.chunk.css.map",
   "index.html": "/czu-movie-dbs/index.html",
-  "precache-manifest.5e5468f4800eafc022a091b89ef90feb.js": "/czu-movie-dbs/precache-manifest.5e5468f4800eafc022a091b89ef90feb.js",
+  "precache-manifest.e40401ca4d4dcc3673096a6f70f5c21c.js": "/czu-movie-dbs/precache-manifest.e40401ca4d4dcc3673096a6f70f5c21c.js",
   "service-worker.js": "/czu-movie-dbs/service-worker.js"
 }
