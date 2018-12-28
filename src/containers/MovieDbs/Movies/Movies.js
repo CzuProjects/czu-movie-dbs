@@ -41,9 +41,15 @@ class Movies extends Component {
         });
 
         return (
-            <section className={classes.Movies}>
-                {movies}
-            </section>
+            <>
+                <div className={classes.WelcomeText}>
+                    <h1>Welcome to The movie database!</h1>
+                    <h4>This site is an university project written in React.js. For the last movie releases and other information is used <a href="http://themoviedb.org">themoviedb.org</a> site API.</h4>
+                </div>
+                <section className={classes.Movies}>
+                    {movies}
+                </section>
+            </>
         );
     }
 
