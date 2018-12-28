@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/czu-movie-dbs/precache-manifest.002d358f43b5d558a4fbb9a8d0d39742.js"
+  "/czu-movie-dbs/precache-manifest.f1fc0ea2d7b57405a10b225c5bed8199.js"
 );
 
 workbox.clientsClaim();
