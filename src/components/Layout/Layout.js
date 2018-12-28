@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import classes from './Layout.css';
 import Toolbar from '../Navigation/Toolbar/Toolbar';
 import SideDrawer from '../Navigation/SideDrawer/SideDrawer';
+import Footer from '../Footer/Footer';
 
 class Layout extends Component {
 
@@ -20,6 +21,7 @@ class Layout extends Component {
                 <main className={classes.Content}>
                     {this.props.children}
                 </main>
+                <Footer />
             </>
         );
     }

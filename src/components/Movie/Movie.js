@@ -6,7 +6,7 @@ const movie = (props) => (
 
     <article className={classes.Movie}>
         <h1>{props.title}</h1>
-        <div>{props.overview}</div>
+        <div>{props.overview}<p><strong>Popularity: </strong>{props.popularity}</p></div>
         <Link to={"/movie-detail/"+props.id}>Details</Link>
     </article>
 );

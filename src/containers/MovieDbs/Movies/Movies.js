@@ -8,8 +8,8 @@ class Movies extends Component {
 
     state = {
         movies: [
-            {id: 1, title: 'Harry Potter a Kamen Mudrcu', overview: 'Popis k Harrymu'},
-            {id: 2, title: 'Vykoupeni z veznice Shawshank', overview: 'Popis k vykoupeni'}
+            {id: 1, title: 'Harry Potter a Kamen Mudrcu', overview: 'Popis k Harrymu', popularity: 300},
+            {id: 2, title: 'Vykoupeni z veznice Shawshank', overview: 'Popis k vykoupeni', popularity: 400}
         ]
     };
 
@@ -20,6 +20,7 @@ class Movies extends Component {
                     this.setState({
                         movies: response.data.results
                     });
+                    console.log(response.data);
                 }).catch(error => {
                     console.log(error);
             });
@@ -34,6 +35,7 @@ class Movies extends Component {
                     key={movie.id}
                     title={movie.title}
                     overview={movie.overview}
+                    popularity={movie.popularity}
                     id={movie.id}/>
             )
         });
